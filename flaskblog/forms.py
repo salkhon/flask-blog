@@ -35,5 +35,5 @@ class LoginForm(FlaskForm):
     remember = BooleanField("Remember Me")
     submit = SubmitField("Login")
 
-# When we use these forms, we need to set a secret key for our application. 
-# Secret key will protect against modifying cookies, cross site requests, forgery attacks. 
+# When we use these forms, we need to set a secret key for our application.
+# Secret key will protect against modifying cookies, cross site requests, forgery attacks.
