@@ -48,6 +48,7 @@ class Post(flaskblog.db.Model):
 
     user_id = flaskblog.db.Column(flaskblog.db.Integer, flaskblog.db.ForeignKey(
         "user.id"), nullable=False)
+    # backref author
 
     def __repr__(self):
         return f"Post('{self.title}', '{self.date_posted}')"

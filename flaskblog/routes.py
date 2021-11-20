@@ -2,32 +2,17 @@ import os
 import flask
 import secrets
 from PIL import Image
-from flask.helpers import flash
 
 import flaskblog
 from flaskblog.models import User, Post
-from flaskblog.forms import RegistrationForm, LoginForm, UpdateAccountForm
+from flaskblog.forms import PostForm, RegistrationForm, LoginForm, UpdateAccountForm
 import flask_login
-
-posts = [
-    {
-        "author": "Corey Schafer",
-        "title": "Blog Post 1",
-        "content": "First post content",
-        "date_posted": "April 20, 2018"
-    },
-    {
-        "author": "Salman Khondker",
-        "title": "Blog Post 2",
-        "content": "Second post content",
-        "date_posted": "April 21, 2018"
-    }
-]
 
 
 @flaskblog.app.route("/")
 @flaskblog.app.route("/home")
 def home():
+    posts = Post.query.all()
     return flask.render_template("home.html", posts=posts)
 
 
@@ -39,7 +24,7 @@ def about():
 @flaskblog.app.route("/register", methods=["GET", "POST"])
 def register():
     if flask_login.current_user.is_authenticated:
-        flash("You are already logged in!", "info")
+        flask.flash("You are already logged in!", "info")
         return flask.redirect(flask.url_for("home"))
 
     form = RegistrationForm()
@@ -54,7 +39,8 @@ def register():
 
         # one time alert
         # "success" - bootstrap class
-        flash(f"Your account has been created! You are now able to log in!", "success")
+        flask.flash(
+            f"Your account has been created! You are now able to log in!", "success")
 
         return flask.redirect(flask.url_for("login"))
 
@@ -64,7 +50,7 @@ def register():
 @flaskblog.app.route("/login", methods=["GET", "POST"])
 def login():
     if flask_login.current_user.is_authenticated:
-        flash("You are already logged in!", "info")
+        flask.flash("You are already logged in!", "info")
         return flask.redirect(flask.url_for("home"))
 
     form = LoginForm()
@@ -78,7 +64,8 @@ def login():
             next_page = flask.request.args.get("next")
             return flask.redirect(next_page) if next_page else flask.redirect(flask.url_for("home"))
         else:
-            flash("Login Unsuccessful. Please check email and password", "danger")
+            flask.flash(
+                "Login Unsuccessful. Please check email and password", "danger")
 
     return flask.render_template("login.html", title="Login", form=form)
 
@@ -110,11 +97,11 @@ def account():
         if form.picture.data:
             pic_filename = _save_picture(form.picture.data)
             flask_login.current_user.image_file = pic_filename
-            
+
         flask_login.current_user.username = form.username.data
         flask_login.current_user.email = form.email.data
         flaskblog.db.session.commit()
-        flash("Your account has been updated!", "success")
+        flask.flash("Your account has been updated!", "success")
         # redirect for post-get-redirect pattern.
         # runs GET instead of POST, to avoid resubmit notification when page is reloaded
         return flask.redirect(flask.url_for("account"))
@@ -124,3 +111,63 @@ def account():
     image_file = flask.url_for(
         "static", filename=f"profile_pics/{flask_login.current_user.image_file}")
     return flask.render_template("account.html", title="Account", image_file=image_file, form=form)
+
+
+@flaskblog.app.route("/post/new", methods=["GET", "POST"])
+@flask_login.login_required
+def new_post():
+    form = PostForm()
+    if form.validate_on_submit():
+        flask.flash("Your post has been created!", "success")
+        post = Post(title=form.title.data, content=form.content.data,
+                    author=flask_login.current_user)
+        flaskblog.db.session.add(post)
+        flaskblog.db.session.commit()
+        return flask.redirect(flask.url_for("home"))
+    return flask.render_template("create_post.html", title="New Post", form=form, legend="New Post")
+
+
+@flaskblog.app.route("/post/<int:post_id>")  # variables of int type in route
+def post(post_id):
+    """GETs post of passed in post_id in the URL. Single page view of the required post. 
+
+    Args:
+        post_id (int): post_id of post to GET. int: in route restricts type of var. 
+    """
+    post = Post.query.get_or_404(
+        post_id)  # if it does not exist return 404. If exists, render a template with that post
+    return flask.render_template("post.html", title=post.title, post=post)
+
+
+@flaskblog.app.route("/post/<int:post_id>/update", methods=["GET", "POST"])
+@flask_login.login_required
+def update_post(post_id):
+    post = Post.query.get_or_404(post_id)
+    if post.author.id != flask_login.current_user.id:
+        flask.abort(403)  # Forbidden Route.
+    form = PostForm()
+    if form.validate_on_submit():
+        post.title = form.title.data
+        post.content = form.content.data
+        flaskblog.db.session.commit()
+        flask.flash("Your post has been updated!", "success")
+        return flask.redirect(flask.url_for("post", post_id=post.id))
+    elif flask.request.method == "GET":
+        form.title.data = post.title
+        form.content.data = post.content
+
+    # we're going to make use of same tempate for create and update with params.
+    # if this route was used to view create_post.html, form submit will POST on this route. 
+    return flask.render_template("create_post.html", title="Update Post", form=form, legend="Update Post")
+
+
+@flaskblog.app.route("/post/<int:post_id>/delete", methods=["POST"])
+@flask_login.login_required
+def delete_post(post_id):
+    post = Post.query.get_or_404(post_id)
+    if post.author.id != flask_login.current_user.id:
+        flask.abort(403)
+    flaskblog.db.session.delete(post)
+    flaskblog.db.session.commit()
+    flask.flash("Your post has been deleted!", "success")
+    return flask.redirect(flask.url_for("home"))
