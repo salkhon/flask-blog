@@ -1,3 +1,4 @@
 {
     "editor.defaultFormatter": "ms-python.python",
+    "cmake.configureOnOpen": false,
 }

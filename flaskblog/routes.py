@@ -12,7 +12,10 @@ import flask_login
 @flaskblog.app.route("/")
 @flaskblog.app.route("/home")
 def home():
-    posts = Post.query.all()
+    page = flask.request.args.get("page", 1, type=int)
+    posts = Post.query.order_by(
+        Post.date_posted.desc()).paginate(page=page, per_page=5)
+    # path params are used to identify specific resources, while query params are used to sort / filter those resoures
     return flask.render_template("home.html", posts=posts)
 
 
@@ -157,7 +160,7 @@ def update_post(post_id):
         form.content.data = post.content
 
     # we're going to make use of same tempate for create and update with params.
-    # if this route was used to view create_post.html, form submit will POST on this route. 
+    # if this route was used to view create_post.html, form submit will POST on this route.
     return flask.render_template("create_post.html", title="Update Post", form=form, legend="Update Post")
 
 
@@ -171,3 +174,12 @@ def delete_post(post_id):
     flaskblog.db.session.commit()
     flask.flash("Your post has been deleted!", "success")
     return flask.redirect(flask.url_for("home"))
+
+
+@flaskblog.app.route("/user/<string:username>")
+def user_posts(username):
+    page = flask.request.args.get("page", 1, type=int)
+    user = User.query.filter_by(username=username).first_or_404()
+    posts = Post.query.filter_by(author=user).order_by(
+        Post.date_posted.desc()).paginate(page=page, per_page=5)
+    return flask.render_template("user_posts.html", posts=posts, user=user)
