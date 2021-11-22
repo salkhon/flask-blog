@@ -4,13 +4,18 @@ import flaskblog
 
 from flask_login import UserMixin
 
-# Reloading the user from the user_id stored in the session. 
+from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+
+# Reloading the user from the user_id stored in the session.
+
+
 @flaskblog.login_manager.user_loader
 def load_user(userid):
     return User.query.get(int(userid))
 
-# The login manager extension expects the User model to have is_authenticated(), is_active(), is_anonymous(), get_id(). 
-# Extension provides a class, from which we can inherit these common methods. 
+# The login manager extension expects the User model to have is_authenticated(), is_active(), is_anonymous(), get_id().
+# Extension provides a class, from which we can inherit these common methods.
+
 
 class User(flaskblog.db.Model, UserMixin):
     """
@@ -29,6 +34,39 @@ class User(flaskblog.db.Model, UserMixin):
     # one to many
     posts = flaskblog.db.relationship("Post", backref="author", lazy=True)
     # setting as instance variables in constructor don't work
+
+    def get_reset_token(self, expires_sec=1800) -> str:
+        """Uses itsdangerous TimedJSONWebSignatureSerializer to encode user_id payload to send it to unsecure 
+        destinations. Generated token contains expiration. It allows us to handle expirations and tokens without
+        needing to put all of that into a database and make things more complicated than they need to be.  
+
+        Args:
+            expires_sec (int, optional): expiry time in seconds. Defaults to 1800s (30 mins).
+
+        Returns:
+            string: userid serialized by itsdangerous serializer
+        """
+        s = Serializer(flaskblog.app.config["SECRET_KEY"], expires_sec)
+        return s.dumps({
+            "user_id": self.id
+        }).decode("utf-8")
+
+    @staticmethod
+    def verify_reset_token(token: str):
+        """Decodes the token encoded by itsdangerous to get the payload.
+
+        Args:
+            token (string): object serialized using itdangerous. 
+
+        Returns:
+            obj: Decoded token. 
+        """
+        s = Serializer(flaskblog.app.config["SECRET_KEY"])
+        try:
+            user_id = s.loads(token)["user_id"]
+        except:
+            return None
+        return User.query.get(user_id)
 
     def __repr__(self):
         return f"User('{self.username}', {self.email}, '{self.image_file}')"
