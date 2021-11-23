@@ -1,5 +1,5 @@
-import os
 from flask import Flask
+from flaskblog.config import Config
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt  # Flask password encryption
 # We add some functionalities to our db models, and it will handle all the sessions in the background
@@ -7,26 +7,34 @@ from flask_login import LoginManager
 import flask_mail
 # we're going to need a mail server, mail port. TLS. username and password for that server.
 
-app = Flask(__name__)
-# ideally you want secret keys to be just some random characters.
-# >>> import secrets
-# >>> secrets.token_hex(16) # 16 bytes
-# '9f9ad0ecd4303f23b26b6da9cf549216'
-# ^ getting random chars in python.
-# you'll want to make this environment variable
-app.config["SECRET_KEY"] = "9f9ad0ecd4303f23b26b6da9cf549216"
-# /// means relative from current file.
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///site.db"
-db = SQLAlchemy(app)
-bcrypt = Bcrypt(app)
-login_manager = LoginManager(app)
+# extensions not bound to flask instance, will be bound with passed in config when run.py is executed 
+db = SQLAlchemy()
+
+bcrypt = Bcrypt()
+
+login_manager = LoginManager()
 # redirects to login page if user_authentication is required but not done.
-login_manager.login_view = "login"
+login_manager.login_view = "users.login"
 login_manager.login_message_category = "info"
-app.config["MAIL_SERVER"] = "smtp.gmail.com"
-app.config["MAIL_PORT"] = 587
-app.config["MAIL_USE_TLS"] = True
-app.config["MAIL_USERNAME"] = os.environ.get("EMAIL_USER")
-app.config["MAIL_PASSWORD"] = os.environ.get("EMAIL_PASS")
-mail = flask_mail.Mail(app)
-print("********************", os.environ.get("EMAIL_USER"))
+
+mail = flask_mail.Mail()
+
+
+def create_app(config_cls=Config):
+    app = Flask(__name__)
+    app.config.from_object(config_cls)
+
+    db.init_app(app)
+    bcrypt.init_app(app)
+    login_manager.init_app(app)
+    mail.init_app(app)
+
+    from flaskblog.main.routes import main
+    from flaskblog.posts.routes import posts
+    from flaskblog.users.routes import users
+
+    app.register_blueprint(users)
+    app.register_blueprint(posts)
+    app.register_blueprint(main)
+
+    return app

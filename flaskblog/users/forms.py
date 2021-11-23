@@ -1,14 +1,10 @@
-from flask_wtf import FlaskForm
-from flask_wtf.file import FileField, FileAllowed # fileupload, file form validator
-from wtforms.fields.simple import BooleanField, PasswordField, StringField, SubmitField, TextAreaField
+import flask_login
+from flask_wtf.file import FileAllowed
+from flask_wtf.form import FlaskForm
+from wtforms.fields.simple import BooleanField, FileField, PasswordField, StringField, SubmitField
 from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError
 
 from flaskblog.models import User
-
-import flask_login
-"""
-Class based form creation that have built in validation methods.
-"""
 
 
 class RegistrationForm(FlaskForm):
@@ -90,16 +86,6 @@ class UpdateAccountForm(FlaskForm):
                     "The email is taken. Please choose another email")
 
 
-class PostForm(FlaskForm):
-    title = StringField("Title", validators=[
-        DataRequired()
-    ])
-    content = TextAreaField("Content", validators=[
-        DataRequired()
-    ])
-    submit = SubmitField("Post")
-
-
 class RequestResetForm(FlaskForm):
     email = StringField("Email", validators=[
         DataRequired(), Email()
@@ -109,7 +95,8 @@ class RequestResetForm(FlaskForm):
     def validate_email(self, email):
         user = User.query.filter_by(email=email.data).first()
         if not user:
-            raise ValidationError("There is no account with that email. You must register first")
+            raise ValidationError(
+                "There is no account with that email. You must register first")
 
 
 class ResetPasswordForm(FlaskForm):

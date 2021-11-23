@@ -1,5 +1,6 @@
 from datetime import datetime
 
+import flask
 import flaskblog
 
 from flask_login import UserMixin
@@ -46,7 +47,7 @@ class User(flaskblog.db.Model, UserMixin):
         Returns:
             string: userid serialized by itsdangerous serializer
         """
-        s = Serializer(flaskblog.app.config["SECRET_KEY"], expires_sec)
+        s = Serializer(flask.current_app.config["SECRET_KEY"], expires_sec)
         return s.dumps({
             "user_id": self.id
         }).decode("utf-8")
@@ -61,7 +62,7 @@ class User(flaskblog.db.Model, UserMixin):
         Returns:
             obj: Decoded token. 
         """
-        s = Serializer(flaskblog.app.config["SECRET_KEY"])
+        s = Serializer(flask.current_app.config["SECRET_KEY"])
         try:
             user_id = s.loads(token)["user_id"]
         except:
