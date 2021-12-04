@@ -15,7 +15,7 @@ def _save_picture(form_picture) -> str:
     pic_path = os.path.join(flask.current_app.root_path,
                             "static/profile_pics", picture_filename)
     output_size = (125, 125)
-    image: PIL.Image = PIL.Image.open(form_picture)
+    image = PIL.Image.open(form_picture)
     image.thumbnail(output_size)
     image.save(pic_path)
     return picture_filename

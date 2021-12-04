@@ -42,7 +42,7 @@ def post(post_id) -> str:
 @flask_login.login_required
 def update_post(post_id) -> Union[str, Response]:
     post = Post.query.get_or_404(post_id)
-    if post.author.id != flask_login.current_user.id:
+    if post.author.id != flask_login.current_user.id:  # type: ignore
         flask.abort(403)  # Forbidden Route.
 
     form = PostForm()
@@ -67,7 +67,7 @@ def update_post(post_id) -> Union[str, Response]:
 def delete_post(post_id) -> Response:
     post = Post.query.get_or_404(post_id)
 
-    if post.author.id != flask_login.current_user.id:
+    if post.author.id != flask_login.current_user.id:  # type: ignore
         flask.abort(403)
 
     flaskblog.db.session.delete(post)

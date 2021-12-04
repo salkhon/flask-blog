@@ -69,7 +69,7 @@ class UpdateAccountForm(FlaskForm):
         """
         Only checks if updated username conflicts with usernames that is not already the current uusername. 
         """
-        if username.data != flask_login.current_user.username:
+        if username.data != flask_login.current_user.username:  # type: ignore
             user = User.query.filter_by(username=username.data).first()
             if user:
                 raise ValidationError(
@@ -79,7 +79,7 @@ class UpdateAccountForm(FlaskForm):
         """
         Only checks if updated email conflicts with emails that is not already the current uemail. 
         """
-        if email.data != flask_login.current_user.email:
+        if email.data != flask_login.current_user.email:  # type: ignore
             user = User.query.filter_by(email=email.data).first()
             if user:
                 raise ValidationError(

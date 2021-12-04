@@ -18,4 +18,5 @@ def error_403(error):
 def error_500(error):
     return flask.render_template("errors/500.html"), 500
 
-# there is another method called errorhandler instead of app_errorhandler - but that is for current Blueprint, not entire application
+# there is another method called errorhandler instead of app_errorhandler 
+# but that is for current Blueprint, not entire application

@@ -13,7 +13,7 @@ users = flask.Blueprint("users", __name__)
 
 @users.route("/register", methods=["GET", "POST"])
 def register() -> Union[str, Response]:
-    if flask_login.current_user.is_authenticated:
+    if flask_login.current_user.is_authenticated:  # type: ignore
         flask.flash("You are already logged in!", "info")
         return flask.redirect(flask.url_for("main.home"))
 
@@ -39,10 +39,9 @@ def register() -> Union[str, Response]:
 
 @users.route("/login", methods=["GET", "POST"])
 def login() -> Union[str, Response]:
-    if flask_login.current_user.is_authenticated:
+    if flask_login.current_user.is_authenticated:  # type: ignore
         flask.flash("You are already logged in!", "info")
         return flask.redirect(flask.url_for("main.home"))
-
     form = LoginForm()
 
     if form.validate_on_submit():
@@ -84,10 +83,10 @@ def account() -> Union[str, Response]:
         # runs GET instead of POST, to avoid resubmit notification when page is reloaded
         return flask.redirect(flask.url_for("users.account"))
     elif flask.request.method == "GET":
-        form.username.data = flask_login.current_user.username
-        form.email.data = flask_login.current_user.email
+        form.username.data = flask_login.current_user.username  # type: ignore
+        form.email.data = flask_login.current_user.email  # type: ignore
     image_file: str = flask.url_for(
-        "static", filename=f"profile_pics/{flask_login.current_user.image_file}")
+        "static", filename=f"profile_pics/{flask_login.current_user.image_file}")  # type: ignore
 
     return flask.render_template("account.html", title="Account", image_file=image_file, form=form)
 
@@ -103,7 +102,7 @@ def user_posts(username: str) -> str:
 
 @users.route("/reset_password", methods=["GET", "POST"])
 def reset_request() -> Union[str, Response]:
-    if flask_login.current_user.is_authenticated:
+    if flask_login.current_user.is_authenticated:  # type: ignore
         flask.flash("You are already logged in!", "info")
         return flask.redirect(flask.url_for("main.home"))
 
@@ -126,11 +125,11 @@ def reset_token(token) -> Union[str, Response]:
     we gave them in the email is active. We wil get that token from the URL. By sending them an email with a text
     containing this token, we will know that it's them when they navigate to this route. 
     """
-    if flask_login.current_user.is_authenticated:
+    if flask_login.current_user.is_authenticated:  # type: ignore
         flask.flash("You are already logged in", "info")
         return flask.redirect(flask.url_for("main.home"))
 
-    user: User = User.verify_reset_token(token)
+    user = User.verify_reset_token(token)
     if not user:
         flask.flash("That is an invalid or expired token", "warning")
         return flask.redirect(flask.url_for("users.reset_request"))

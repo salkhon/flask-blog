@@ -1,3 +1,4 @@
+# type: ignore
 from datetime import datetime
 
 import flask
@@ -5,10 +6,10 @@ import flaskblog
 
 from flask_login import UserMixin
 
-from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+from itsdangerous.jws import TimedJSONWebSignatureSerializer as Serializer
 
 # Reloading the user from the user_id stored in the session.
-
+# type: ignore
 
 @flaskblog.login_manager.user_loader
 def load_user(userid):
@@ -16,7 +17,6 @@ def load_user(userid):
 
 # The login manager extension expects the User model to have is_authenticated(), is_active(), is_anonymous(), get_id().
 # Extension provides a class, from which we can inherit these common methods.
-
 
 class User(flaskblog.db.Model, UserMixin):
     """

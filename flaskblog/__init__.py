@@ -14,7 +14,7 @@ bcrypt = Bcrypt()
 
 login_manager = LoginManager()
 # redirects to login page if user_authentication is required but not done.
-login_manager.login_view = "users.login"
+login_manager.login_view = "users.login"  # type: ignore
 login_manager.login_message_category = "info"
 
 mail = flask_mail.Mail()
